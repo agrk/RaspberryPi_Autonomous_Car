@@ -62,7 +62,7 @@ int main(int argc, char **argv){
 		
 		namedWindow("original", WINDOW_KEEPRATIO);
 		moveWindow("original",50,100);
-		resizeWindow("original",640,480);					s
+		resizeWindow("original",640,480);					
 		imshow("original", frame);
 		
 		//namedWindow("RGB", WINDOW_KEEPRATIO);
