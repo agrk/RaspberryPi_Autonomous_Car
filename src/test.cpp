@@ -11,9 +11,8 @@ using namespace raspicam;
 Mat frame , frame1;
 RaspiCam_Cv Camera;
 
-Point2f Source[]={Point2f(50,200),Point2f(280,200),Point2f(0,240),Point2f(360,240)};
-// point degerleri olusturulacak track e duzenleme yapilacak
-//ekranda olusacak seklin yan taraflari track uzerindeki line a paralel olmali
+Point2f Source[]={Point2f(20,200),Point2f(340,200),Point2f(0,230),Point2f(360,230)};
+//Paralel olacak şekilde düzenleme yapıldı
 
 
  void Setup ( int argc,char **argv, RaspiCam_Cv &Camera )
@@ -63,7 +62,7 @@ int main(int argc, char **argv){
 		
 		namedWindow("original", WINDOW_KEEPRATIO);
 		moveWindow("original",50,100);
-		resizeWindow("original",640,480);					
+		resizeWindow("original",640,480);					s
 		imshow("original", frame);
 		
 		//namedWindow("RGB", WINDOW_KEEPRATIO);
