@@ -1,4 +1,5 @@
 #include <opencv2/opencv.hpp>
+#include <opencv2/imgproc.hpp>
 #include "raspicam_cv.h"
 #include <iostream>
 #include <chrono>
@@ -8,11 +9,13 @@ using namespace std;
 using namespace cv;
 using namespace raspicam;
 
-Mat frame , frame1;
+Mat frame , Matrix , framePers, frameGray;
 RaspiCam_Cv Camera;
 
 Point2f Source[]={Point2f(20,200),Point2f(340,200),Point2f(0,230),Point2f(360,230)};
-//Paralel olacak şekilde düzenleme yapıldı
+// point degerleri olusturulacak track e duzenleme yapilacak
+//ekranda olusacak seklin yan taraflari track uzerindeki line a paralel olmali
+Point2f Destination[]={Point2f(80,0),Point2f(280,0),Point2f(80,240),Point2f(280,240)};
 
 
  void Setup ( int argc,char **argv, RaspiCam_Cv &Camera )
@@ -26,19 +29,33 @@ Point2f Source[]={Point2f(20,200),Point2f(340,200),Point2f(0,230),Point2f(360,23
     Camera.set ( CAP_PROP_FPS,  ( "-fps",argc,argv,0));
 
 }
+void Capture(){
+	
+	Camera.grab();
+	Camera.retrieve( frame);
+	cvtColor(frame, frame,COLOR_BGR2RGB);
+}
 
 void Perspective(){
 	line(frame,Source[0],Source[1], Scalar(0,0,255),2);
 	line(frame,Source[1],Source[3], Scalar(0,0,255),2);
 	line(frame,Source[3],Source[2], Scalar(0,0,255),2);
 	line(frame,Source[2],Source[0], Scalar(0,0,255),2);
+	
+	//line(frame,Destination[0],Destination[1], Scalar(0,255,0),2);
+	//ine(frame,Destination[1],Destination[3], Scalar(0,255,0),2);
+	//line(frame,Destination[3],Destination[2], Scalar(0,255,0),2);
+	//line(frame,Destination[2],Destination[0], Scalar(0,255,0),2);
+	
+	Matrix = getPerspectiveTransform(Source,Destination);
+	warpPerspective(frame , framePers, Matrix, Size(350,240));
 }
 
-void Capture(){
+void Threshold(){
 	
-	Camera.grab();
-	Camera.retrieve( frame);
-	cvtColor(frame, frame,COLOR_BGR2RGB);
+	cvtColor(framePers, frameGray, COLOR_RGB2GRAY);
+	inRange(frameGray, 240, 255, frameGray);
+	
 }
 
 int main(int argc, char **argv){
@@ -59,16 +76,22 @@ int main(int argc, char **argv){
 		
 		Capture();
 		Perspective();
+		Threshold();
 		
 		namedWindow("original", WINDOW_KEEPRATIO);
-		moveWindow("original",50,100);
+		moveWindow("original",0,100);
 		resizeWindow("original",640,480);					
 		imshow("original", frame);
 		
-		//namedWindow("RGB", WINDOW_KEEPRATIO);
-		//moveWindow("RGB",700,100);
-		//resizeWindow("RGB",640,480);					
-		//imshow("RGB", frame1);
+		namedWindow("Perspective", WINDOW_KEEPRATIO);
+		moveWindow("Perspective",640,100);
+		resizeWindow("Perspective",640,480);					
+		imshow("Perspective", framePers);
+		
+		namedWindow("GRAY", WINDOW_KEEPRATIO);
+		moveWindow("GRAY",1280,100);
+		resizeWindow("GRAY",640,480);					
+		imshow("GRAY", frameGray);
 		
 		
 		
