@@ -20,6 +20,8 @@ stringstream ss;
 vector<int> histrogramLane;
 
 Point2f Source[]={Point2f(20,200),Point2f(340,200),Point2f(0,230),Point2f(360,230)};
+// point degerleri olusturulacak track e duzenleme yapilacak
+//ekranda olusacak seklin yan taraflari track uzerindeki line a paralel olmali
 Point2f Destination[]={Point2f(80,0),Point2f(280,0),Point2f(80,240),Point2f(280,240)};
 
 
@@ -94,7 +96,7 @@ void LaneFinder()
 void LaneCenter()
 {
     laneCenter = (RightLanePos-LeftLanePos)/2 +LeftLanePos;
-    frameCenter = 188;
+    frameCenter = 179;
     
     line(frameFinal, Point2f(laneCenter,0), Point2f(laneCenter,240), Scalar(0,255,0), 3);
     line(frameFinal, Point2f(frameCenter,0), Point2f(frameCenter,240), Scalar(255,0,0), 3);
