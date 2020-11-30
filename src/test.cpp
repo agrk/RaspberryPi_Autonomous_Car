@@ -3,6 +3,7 @@
 #include <iostream>
 #include <chrono>
 #include <ctime>
+#include <wiringPi.h>
 
 using namespace std;
 using namespace cv;
@@ -108,6 +109,13 @@ void LaneCenter()
 int main(int argc,char **argv)
 {
 	
+	 
+    wiringPiSetup();
+    pinMode(21, OUTPUT);
+    pinMode(22, OUTPUT);
+    pinMode(23, OUTPUT);
+    pinMode(24, OUTPUT);
+    
 	Setup(argc, argv, Camera);
 	cout<<"Connecting to camera"<<endl;
 	if (!Camera.open())
@@ -131,6 +139,72 @@ int main(int argc,char **argv)
     Histrogram();
     LaneFinder();
     LaneCenter();
+   
+   if (Result == 0)
+    {
+	digitalWrite(21, 0);
+	digitalWrite(22, 0);    //decimal = 0
+	digitalWrite(23, 0);
+	digitalWrite(24, 0);
+	cout<<"Forward"<<endl;
+    }
+    
+        
+    else if (Result >0 && Result <5)
+    {
+	digitalWrite(21, 1);
+	digitalWrite(22, 0);    //decimal = 1
+	digitalWrite(23, 0);
+	digitalWrite(24, 0);
+	cout<<"Right1"<<endl;
+    }
+    
+        else if (Result >=5 && Result <10)
+    {
+	digitalWrite(21, 0);
+	digitalWrite(22, 1);    //decimal = 2
+	digitalWrite(23, 0);
+	digitalWrite(24, 0);
+	cout<<"Right2"<<endl;
+    }
+    
+        else if (Result >10)
+    {
+	digitalWrite(21, 1);
+	digitalWrite(22, 1);    //decimal = 3
+	digitalWrite(23, 0);
+	digitalWrite(24, 0);
+	cout<<"Right3"<<endl;
+    }
+    
+        else if (Result <0 && Result >-5)
+    {
+	digitalWrite(21, 0);
+	digitalWrite(22, 0);    //decimal = 4
+	digitalWrite(23, 1);
+	digitalWrite(24, 0);
+	cout<<"Left1"<<endl;
+    }
+    
+        else if (Result <=-5 && Result >-10)
+    {
+	digitalWrite(21, 1);
+	digitalWrite(22, 0);    //decimal = 5
+	digitalWrite(23, 1);
+	digitalWrite(24, 0);
+	cout<<"Left2"<<endl;
+    }
+    
+        else if (Result <-10)
+    {
+	digitalWrite(21, 0);
+	digitalWrite(22, 1);    //decimal = 6
+	digitalWrite(23, 1);
+	digitalWrite(24, 0);
+	cout<<"Left3"<<endl;
+    }
+    
+    
     
     ss.str(" ");
     ss.clear();
