@@ -137,7 +137,7 @@ void Right2()
 
   digitalWrite(HighR, LOW);
   digitalWrite(LowR, HIGH);
-  analogWrite(EnableR,90);   
+  analogWrite(EnableR,30);   
   
 }
 
@@ -149,7 +149,7 @@ void Right3()
 
   digitalWrite(HighR, LOW);
   digitalWrite(LowR, HIGH);
-  analogWrite(EnableR,50);   
+  analogWrite(EnableR,10);   
   
 }
 
