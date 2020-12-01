@@ -253,7 +253,7 @@ int main(int argc,char **argv)
     {
        ss.str(" ");
        ss.clear();
-       ss<<"Result = "<<Result<<"bMove Right";
+       ss<<"Result = "<<Result<<"Move Right";
        putText(frame, ss.str(), Point2f(1,50), 0,1, Scalar(0,0,255), 2);
     
      }
