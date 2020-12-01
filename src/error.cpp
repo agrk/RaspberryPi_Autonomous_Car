@@ -9,22 +9,9 @@ using namespace std;
 using namespace cv;
 using namespace raspicam;
 
-#define MotorPin1 24
-#define MotorPin2 23
-#define MotorEnableDC1 25
-
-#define MotorPin3 22
-#define MotorPin4 27
-#define MotorEnableDC2 17
-
-int a,b,c,d,data;
-
-
-
-
-Mat frame, Matrix, framePers, frameGray, frameThresh, frameEdge, frameFinal, frameFinalDuplicate;
-Mat ROILane;
-int LeftLanePos, RightLanePos, frameCenter, laneCenter, Result;
+Mat frame, Matrix, framePers, frameGray, frameThresh, frameEdge, frameFinal, frameFinalDuplicate, frameFinalDuplicate1;
+Mat ROILane, ROILaneEnd;
+int LeftLanePos, RightLanePos, frameCenter, laneCenter, Result, laneEnd;
 
 RaspiCam_Cv Camera;
 
@@ -32,6 +19,7 @@ stringstream ss;
 
 
 vector<int> histrogramLane;
+vector<int> histrogramLaneEnd;
 
 Point2f Source[]={Point2f(20,200),Point2f(340,200),Point2f(0,230),Point2f(360,230)};
 // point degerleri olusturulacak track e duzenleme yapilacak
@@ -77,7 +65,8 @@ void Threshold()
 	add(frameThresh, frameEdge, frameFinal);
 	cvtColor(frameFinal, frameFinal, COLOR_GRAY2RGB);
 	cvtColor(frameFinal, frameFinalDuplicate, COLOR_RGB2BGR);   //used in histrogram function only
-	
+	cvtColor(frameFinal, frameFinalDuplicate1, COLOR_RGB2BGR);   //used in histrogram function only
+
 }
 
 void Histrogram()
@@ -87,10 +76,23 @@ void Histrogram()
     
     for(int i=0; i<360; i++)       //frame.size().width = 400
     {
-	ROILane = frameFinalDuplicate(Rect(i,140,1,100));
-	divide(255, ROILane, ROILane);
-	histrogramLane.push_back((int)(sum(ROILane)[0])); 
+		ROILane = frameFinalDuplicate(Rect(i,140,1,100));
+		divide(255, ROILane, ROILane);
+		histrogramLane.push_back((int)(sum(ROILane)[0])); 
     }
+    
+    histrogramLaneEnd.resize(360);
+    histrogramLaneEnd.clear();
+    
+    for(int i=0; i<360; i++)       //frame.size().width = 400
+    {
+		ROILaneEnd = frameFinalDuplicate1(Rect(i,0,1,240));
+		divide(255, ROILaneEnd, ROILaneEnd);
+		histrogramLaneEnd.push_back((int)(sum(ROILaneEnd)[0])); 
+    }
+    
+     laneEnd = sum(histrogramLaneEnd)[0];
+	 cout<<"Lane END = "<<laneEnd<<endl;
 }
 
 void LaneFinder()
@@ -119,37 +121,16 @@ void LaneCenter()
 }
 
 
-//~ void Forward(){
-	//~ digitalWrite(MotorPin1,HIGH);
-	//~ digitalWrite(MotorPin2,LOW);
-	//~ digitalWrite(MotorEnableDC1,HIGH);
-	
-	//~ digitalWrite(MotorPin3,HIGH);
-	//~ digitalWrite(MotorPin4,LOW);
-	//~ digitalWrite(MotorEnableDC2,HIGH);
-//~ }
-
-
-void Data()
-{
-   a = digitalRead(MotorPin1);
-   b = digitalRead(MotorPin2);
-   c = digitalRead(MotorPin2);
-   d = digitalRead(MotorPin3);
-
-   data = 8*d+4*c+2*b+a;
-}
-
 int main(int argc,char **argv)
 {
-	wiringPiSetupGpio();
-	pinMode(MotorPin1, OUTPUT);
-	pinMode(MotorPin2, OUTPUT);
-	pinMode(MotorEnableDC1, OUTPUT);
-	pinMode(MotorPin3, OUTPUT);
-	pinMode(MotorPin4, OUTPUT);
-	pinMode(MotorEnableDC2, OUTPUT);
 	
+	 
+    wiringPiSetup();
+    pinMode(21, OUTPUT);
+    pinMode(22, OUTPUT);
+    pinMode(23, OUTPUT);
+    pinMode(24, OUTPUT);
+    
 	Setup(argc, argv, Camera);
 	cout<<"Connecting to camera"<<endl;
 	if (!Camera.open())
@@ -173,12 +154,119 @@ int main(int argc,char **argv)
     Histrogram();
     LaneFinder();
     LaneCenter();
-    //Forward();
     
-    ss.str(" ");
-    ss.clear();
-    ss<<"Result = "<<Result;
-    putText(frame, ss.str(), Point2f(1,50), 0,1, Scalar(0,0,255), 2);
+    if (laneEnd > 3000)
+    {
+   	digitalWrite(21, 1);
+	digitalWrite(22, 1);    //decimal = 7
+	digitalWrite(23, 1);
+	digitalWrite(24, 0);
+	cout<<"Lane End"<<endl;
+    }
+    
+   
+   if (Result == 0)
+    {
+	digitalWrite(21, 0);
+	digitalWrite(22, 0);    //decimal = 0
+	digitalWrite(23, 0);
+	digitalWrite(24, 0);
+	cout<<"Forward"<<endl;
+    }
+    
+        
+    else if (Result >0 && Result <5)
+    {
+	digitalWrite(21, 1);
+	digitalWrite(22, 0);    //decimal = 1
+	digitalWrite(23, 0);
+	digitalWrite(24, 0);
+	cout<<"Right1"<<endl;
+    }
+    
+        else if (Result >=5 && Result <10)
+    {
+	digitalWrite(21, 0);
+	digitalWrite(22, 1);    //decimal = 2
+	digitalWrite(23, 0);
+	digitalWrite(24, 0);
+	cout<<"Right2"<<endl;
+    }
+    
+        else if (Result >10)
+    {
+	digitalWrite(21, 1);
+	digitalWrite(22, 1);    //decimal = 3
+	digitalWrite(23, 0);
+	digitalWrite(24, 0);
+	cout<<"Right3"<<endl;
+    }
+    
+        else if (Result <0 && Result >-5)
+    {
+	digitalWrite(21, 0);
+	digitalWrite(22, 0);    //decimal = 4
+	digitalWrite(23, 1);
+	digitalWrite(24, 0);
+	cout<<"Left1"<<endl;
+    }
+    
+        else if (Result <=-5 && Result >-10)
+    {
+	digitalWrite(21, 1);
+	digitalWrite(22, 0);    //decimal = 5
+	digitalWrite(23, 1);
+	digitalWrite(24, 0);
+	cout<<"Left2"<<endl;
+    }
+    
+        else if (Result <-10)
+    {
+	digitalWrite(21, 0);
+	digitalWrite(22, 1);    //decimal = 6
+	digitalWrite(23, 1);
+	digitalWrite(24, 0);
+	cout<<"Left3"<<endl;
+    }
+    
+    
+    
+    if (laneEnd > 3000)
+    {
+       ss.str(" ");
+       ss.clear();
+       ss<<" Lane End";
+       putText(frame, ss.str(), Point2f(1,50), 0,1, Scalar(255,0,0), 2);
+    
+     }
+    
+    else if (Result == 0)
+    {
+       ss.str(" ");
+       ss.clear();
+       ss<<"Result = "<<Result<<" Move Forward";
+       putText(frame, ss.str(), Point2f(1,50), 0,1, Scalar(0,0,255), 2);
+    
+     }
+    
+    else if (Result > 0)
+    {
+       ss.str(" ");
+       ss.clear();
+       ss<<"Result = "<<Result<<"bMove Right";
+       putText(frame, ss.str(), Point2f(1,50), 0,1, Scalar(0,0,255), 2);
+    
+     }
+     
+     else if (Result < 0)
+     {
+       ss.str(" ");
+       ss.clear();
+       ss<<"Result = "<<Result<<" Move Left";
+       putText(frame, ss.str(), Point2f(1,50), 0,1, Scalar(0,0,255), 2);
+    
+     } 
+    
     
     namedWindow("orignal", WINDOW_KEEPRATIO);
     moveWindow("orignal", 0, 100);
@@ -194,81 +282,6 @@ int main(int argc,char **argv)
     moveWindow("Final", 1280, 100);
     resizeWindow("Final", 640, 480);
     imshow("Final", frameFinal);
-    
-    
-    //~ digitalWrite(MotorEnableDC1,HIGH);
-    //~ digitalWrite(MotorPin1,HIGH);
-    //~ digitalWrite(MotorPin2,HIGH);
-    //~ delay(5000);
-    
-    //~ digitalWrite(MotorEnableDC1,HIGH);
-    //~ digitalWrite(MotorPin1,HIGH);
-    //~ digitalWrite(MotorPin2,HIGH);
-    
-    //~ cout<<"after 5 sec"<<endl;
-   
-    
-     if (Result == 0 && data==1)
-    {
-	   digitalWrite(MotorPin1,LOW);
-	   digitalWrite(MotorPin2,LOW);
-	   digitalWrite(MotorEnableDC1,LOW);
-	
-	   digitalWrite(MotorPin3,LOW);
-	   digitalWrite(MotorPin4,LOW);
-	   digitalWrite(MotorEnableDC2,LOW);
-    }
-    
-        
-    //~ else if (Result >0 && Result <10)
-    //~ {
-	
-    //~ }
-    
-        //~ else if (Result >=10 && Result <20)
-    //~ {
-	//~ digitalWrite(24, 0);
-	//~ digitalWrite(23, 1);    //decimal = 2
-	//~ digitalWrite(22, 0);
-	//~ digitalWrite(27, 0);
-	//~ cout<<"Right2"<<endl;
-    //~ }
-    
-        //~ else if (Result >20)
-    //~ {
-	//~ digitalWrite(24, 1);
-	//~ digitalWrite(23, 1);    //decimal = 3
-	//~ digitalWrite(22, 0);
-	//~ digitalWrite(27, 0);
-	//~ cout<<"Right3"<<endl;
-    //~ }
-    
-        //~ else if (Result <0 && Result >-10)
-    //~ {
-	//~ digitalWrite(24, 0);
-	//~ digitalWrite(23, 0);    //decimal = 4
-	//~ digitalWrite(22, 1);
-	//~ digitalWrite(27, 0);
-	//~ cout<<"Left1"<<endl;
-    //~ }
-    
-        //~ else if (Result <=-10 && Result >-20)
-    //~ {
-	//~ digitalWrite(24, 1);
-	//~ digitalWrite(23, 0);    //decimal = 5
-	//~ digitalWrite(22, 1);
-	//~ digitalWrite(27, 0);
-	//~ cout<<"Left2"<<endl;
-    //~ }
-    
-        //~ else if (Result <-20)
-    //~ {
-	//~ digitalWrite(24, 0);
-	//~ digitalWrite(23, 1);    //decimal = 6
-	//~ digitalWrite(22, 1);
-	//~ digitalWrite(27, 0);
-	//~ cout<<"Left3"<<endl;
-    //~ }
     
     
     waitKey(1);
