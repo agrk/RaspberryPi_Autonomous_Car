@@ -72,7 +72,7 @@ void Histrogram()
     histrogramLane.resize(360);
     histrogramLane.clear();
     
-    for(int i=0; i<360; i++)       //frame.size().width = 400
+    for(int i=0; i<360; i++)       //frame.size().width = 360
     {
 	ROILane = frameFinalDuplicate(Rect(i,140,1,100));
 	divide(255, ROILane, ROILane);
