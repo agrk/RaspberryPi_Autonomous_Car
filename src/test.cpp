@@ -27,11 +27,10 @@ Point2f Destination[]={Point2f(80,0),Point2f(280,0),Point2f(80,240),Point2f(280,
 
 //Machine learning variables
 
-CascadeClassifier Stop_Cascade;
-Mat frame_Stop, RoI_Stop, gray_Stop;
-vector<Rect> Stop;
-
-int dist_Stop;
+CascadeClassifier Stop_Cascade , Object_Cascade;
+Mat frame_Stop, RoI_Stop, gray_Stop, frame_Object, RoI_Object, gray_Object;
+vector<Rect> Stop, Object;
+int dist_Stop, dist_Object;
 
 
  void Setup ( int argc,char **argv, RaspiCam_Cv &Camera )
@@ -47,10 +46,12 @@ int dist_Stop;
 }
 void Capture()
 {
-    Camera.grab();
+	Camera.grab();
     Camera.retrieve( frame);
     cvtColor(frame, frame_Stop, COLOR_BGR2RGB);
+    cvtColor(frame, frame_Object, COLOR_BGR2RGB);
     cvtColor(frame, frame, COLOR_BGR2RGB);
+    
 }
 
 void Perspective()
@@ -62,7 +63,7 @@ void Perspective()
 	
 	
 	Matrix = getPerspectiveTransform(Source, Destination);
-	warpPerspective(frame, framePers, Matrix, Size(400,240));
+	warpPerspective(frame, framePers, Matrix, Size(360,240));
 }
 
 void Threshold()
@@ -81,7 +82,7 @@ void Histrogram()
     histrogramLane.resize(360);
     histrogramLane.clear();
     
-    for(int i=0; i<360; i++)       //frame.size().width = 360
+    for(int i=0; i<360; i++)       //frame.size().width = 400
     {
 	ROILane = frameFinalDuplicate(Rect(i,140,1,100));
 	divide(255, ROILane, ROILane);
@@ -144,6 +145,40 @@ void Stop_detection()
     
 }
 
+void Object_detection()
+{
+    if(!Object_Cascade.load("//home//pi//Car//Object_cascade.xml"))
+    {
+	printf("Unable to open object cascade file");
+    }
+    
+    RoI_Object = frame_Object(Rect(100,60,200,140));
+    cvtColor(RoI_Object, gray_Object, COLOR_RGB2GRAY);
+    equalizeHist(gray_Object, gray_Object);
+    Object_Cascade.detectMultiScale(gray_Object, Object);
+    
+    for(int i=0; i<Object.size(); i++)
+    {
+	Point P1(Object[i].x, Object[i].y);
+	Point P2(Object[i].x + Object[i].width, Object[i].x + Object[i].height);
+	
+	rectangle(RoI_Object, P1, P2, Scalar(0, 0, 255), 2);
+	putText(RoI_Object, "Object", P1, FONT_HERSHEY_PLAIN, 1,  Scalar(0, 0, 255, 255), 2);
+	dist_Object = (-0.71)*(P2.x-P1.x) + 103.9;
+	
+	ss.str(" ");
+    ss.clear();
+    ss<<"D = "<<dist_Object<<" cm";
+    putText(RoI_Object, ss.str(), Point2f(1,130), 0,1, Scalar(0,0,255), 2);
+	
+    }
+    
+}
+
+
+
+
+
 int main(int argc,char **argv)
 {
 	
@@ -178,7 +213,9 @@ int main(int argc,char **argv)
     LaneFinder();
     LaneCenter();
     Stop_detection();
-   
+    Object_detection();
+    
+    
     if (dist_Stop > 5 && dist_Stop < 20)
     {
 	digitalWrite(21, 0);
@@ -187,12 +224,22 @@ int main(int argc,char **argv)
 	digitalWrite(24, 1);
 	cout<<"Stop Sign"<<endl;
 	dist_Stop = 0;
-
+	
 	goto Stop_Sign;
-      }
-	    
-	    
-	   	    
+    }
+        
+    if (dist_Object> 5 && dist_Object < 20)
+    {
+	digitalWrite(21, 1);
+	digitalWrite(22, 0);    //decimal = 9
+	digitalWrite(23, 0);
+	digitalWrite(24, 1);
+	cout<<"Object"<<endl;
+	dist_Object;
+	goto Object;
+    }
+    
+   
    if (Result == 0)
     {
 	digitalWrite(21, 0);
@@ -257,7 +304,10 @@ int main(int argc,char **argv)
 	cout<<"Left3"<<endl;
     }
     
-    Stop_Sign:
+     Stop_Sign:
+     Object:
+    
+    
     
     ss.str(" ");
     ss.clear();
@@ -279,11 +329,18 @@ int main(int argc,char **argv)
     moveWindow("Final", 1280, 100);
     resizeWindow("Final", 640, 480);
     imshow("Final", frameFinal);
-	    
+    
+    
     namedWindow("Stop Sign", WINDOW_KEEPRATIO);
     moveWindow("Stop Sign", 1280, 580);
     resizeWindow("Stop Sign", 640, 480);
     imshow("Stop Sign", RoI_Stop);
+    
+    namedWindow("Object", WINDOW_KEEPRATIO);
+    moveWindow("Object", 640, 580);
+    resizeWindow("Object", 640, 480);
+    imshow("Object", RoI_Object);
+    
     
     
     waitKey(1);
