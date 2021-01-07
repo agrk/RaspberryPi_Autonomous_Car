@@ -8,6 +8,6 @@ Self Driving Car / Graduation Thesis Project
 
 
 You can find the links for the videos for the self driving car here:
-- Detecting the car in front of its and moving to the side left lane and continue:  https://youtu.be/XHu5VRzVWwg
-- Continuing the road by getting ahead of the car as an improved: https://youtu.be/Et18lR2VIXI
+- Detect the car in front and keep moving in the left lane: https://youtu.be/XHu5VRzVWwg
+- Passing in front of the detected car, continue to move on the right lane https://youtu.be/Et18lR2VIXI
 - When it sees the stop sign, it should wait for a while and continue to move: https://youtu.be/WhLQSv6BIyg
